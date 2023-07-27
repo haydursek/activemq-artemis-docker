@@ -4,7 +4,7 @@
 ## Build Image                                           #
 ##########################################################
 FROM openjdk:17.0.2-jdk-buster as builder
-LABEL maintainer="Muhammad Ali Kahoot <kahoot.ali@gmail.com>"
+LABEL maintainer="Shahwar Maiwandi <shahwar.maiwandi@gmail.com>"
 
 
 ARG ACTIVEMQ_ARTEMIS_VERSION
@@ -19,12 +19,12 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 RUN apt-get -qq -o=Dpkg::Use-Pty=0 update && \
   apt-get -qq -o=Dpkg::Use-Pty=0 install -y --no-install-recommends \
-    libaio1 \
-    xmlstarlet \
-    jq \
-    ca-certificates \
-    wget \
-    ivy && \
+  libaio1 \
+  xmlstarlet \
+  jq \
+  ca-certificates \
+  wget \
+  ivy && \
   rm -rf /var/lib/apt/lists/*
 
 # Make sure pipes are considered to detemine success, see: https://github.com/hadolint/hadolint/wiki/DL4006
@@ -33,35 +33,35 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 # Uncompress and validate
 WORKDIR /opt
 RUN   wget "https://repository.apache.org/content/repositories/releases/org/apache/activemq/apache-artemis/${ACTIVEMQ_ARTEMIS_VERSION}/apache-artemis-${ACTIVEMQ_ARTEMIS_VERSION}-bin.tar.gz" && \
-      wget "https://repository.apache.org/content/repositories/releases/org/apache/activemq/apache-artemis/${ACTIVEMQ_ARTEMIS_VERSION}/apache-artemis-${ACTIVEMQ_ARTEMIS_VERSION}-bin.tar.gz.asc" && \
-      wget "https://downloads.apache.org/activemq/KEYS" && \
-      gpg --no-tty --import "KEYS" && \
-      gpg --no-tty "apache-artemis-${ACTIVEMQ_ARTEMIS_VERSION}-bin.tar.gz.asc" && \
-      tar xfz "apache-artemis-${ACTIVEMQ_ARTEMIS_VERSION}-bin.tar.gz" && \
-      ln -s "/opt/apache-artemis-${ACTIVEMQ_ARTEMIS_VERSION}" "/opt/apache-artemis" && \
-      rm -f "apache-artemis-${ACTIVEMQ_ARTEMIS_VERSION}-bin.tar.gz" "KEYS" "apache-artemis-${ACTIVEMQ_ARTEMIS_VERSION}-bin.tar.gz.asc";
+  wget "https://repository.apache.org/content/repositories/releases/org/apache/activemq/apache-artemis/${ACTIVEMQ_ARTEMIS_VERSION}/apache-artemis-${ACTIVEMQ_ARTEMIS_VERSION}-bin.tar.gz.asc" && \
+  wget "https://downloads.apache.org/activemq/KEYS" && \
+  gpg --no-tty --import "KEYS" && \
+  gpg --no-tty "apache-artemis-${ACTIVEMQ_ARTEMIS_VERSION}-bin.tar.gz.asc" && \
+  tar xfz "apache-artemis-${ACTIVEMQ_ARTEMIS_VERSION}-bin.tar.gz" && \
+  ln -s "/opt/apache-artemis-${ACTIVEMQ_ARTEMIS_VERSION}" "/opt/apache-artemis" && \
+  rm -f "apache-artemis-${ACTIVEMQ_ARTEMIS_VERSION}-bin.tar.gz" "KEYS" "apache-artemis-${ACTIVEMQ_ARTEMIS_VERSION}-bin.tar.gz.asc";
 
 # Create broker instance
 # Per recommendation of https://activemq.apache.org/artemis/docs/latest/perf-tuning.html : -XX:+AggressiveOpts -XX:+UseFastAccessorMethods -XX:+UseParallelOldGC 
 WORKDIR /var/lib
 RUN if test "${ACTIVEMQ_ARTEMIS_VERSION}" = "1.0.0" ; \
-    then \
-      echo n | "/opt/apache-artemis-${ACTIVEMQ_ARTEMIS_VERSION}/bin/artemis" create artemis \
-        --home /opt/apache-artemis \
-        --user artemis \
-        --password simetraehcapa \
-        --cluster-user artemisCluster \
-        --cluster-password simetraehcaparetsulc ; \
-    else \
-      "/opt/apache-artemis-${ACTIVEMQ_ARTEMIS_VERSION}/bin/artemis" create artemis \
-        --home /opt/apache-artemis \
-        --user artemis \
-        --password simetraehcapa \
-        --role amq \
-        --require-login \
-        --cluster-user artemisCluster \
-        --cluster-password simetraehcaparetsulc ; \
-    fi 
+  then \
+  echo n | "/opt/apache-artemis-${ACTIVEMQ_ARTEMIS_VERSION}/bin/artemis" create artemis \
+  --home /opt/apache-artemis \
+  --user artemis \
+  --password simetraehcapa \
+  --cluster-user artemisCluster \
+  --cluster-password simetraehcaparetsulc ; \
+  else \
+  "/opt/apache-artemis-${ACTIVEMQ_ARTEMIS_VERSION}/bin/artemis" create artemis \
+  --home /opt/apache-artemis \
+  --user artemis \
+  --password simetraehcapa \
+  --role amq \
+  --require-login \
+  --cluster-user artemisCluster \
+  --cluster-password simetraehcaparetsulc ; \
+  fi 
 
 # Using KUBE_PING 0.9.3. Can't upgrade to 1.x.x as Artemis uses JGroups 3.3.x 
 # https://github.com/jgroups-extras/jgroups-kubernetes/issues/30
@@ -88,8 +88,8 @@ RUN sed -i "s/JAVA_ARGS=\"/JAVA_ARGS=\"-Djava.net.preferIPv4Addresses=true -Djav
 # Ports are only exposed with an explicit argument, there is no need to binding
 # the web console to localhost
 RUN xmlstarlet ed -L -N amq="http://activemq.org/schema" \
-    -u "/amq:broker/amq:web/@bind" \
-    -v "http://0.0.0.0:8161" bootstrap.xml
+  -u "/amq:broker/amq:web/@bind" \
+  -v "http://0.0.0.0:8161" bootstrap.xml
 
 # In a similar fashion the jolokia access is restricted to localhost only. Disabling
 # this as in the natural environmnets for the image like Kubernetes this is problematic.
@@ -117,7 +117,7 @@ COPY assets/jmx-exporter-config.yaml /opt/jmx-exporter/etc/
 ##########################################################
 # hadolint ignore=DL3006
 FROM openjdk:17.0.2-jdk-buster
-LABEL maintainer="Muhammad Ali Kahoot <kahoot.ali@gmail.com>"
+LABEL maintainer="Shahwar Maiwandi <shahwar.maiwandi@gmail.com>"
 ARG ACTIVEMQ_ARTEMIS_VERSION
 ENV ACTIVEMQ_ARTEMIS_VERSION=$ACTIVEMQ_ARTEMIS_VERSION
 
@@ -126,12 +126,12 @@ RUN groupadd -g 1000 -r artemis && useradd -r -u 1000 -g artemis artemis
 
 RUN apt-get -qq -o=Dpkg::Use-Pty=0 update && \
   apt-get -qq -o=Dpkg::Use-Pty=0 install -y --no-install-recommends \
-    libaio1 \
-    xmlstarlet \
-    jq \
-    gettext-base \
-    dumb-init \
-    procps && \
+  libaio1 \
+  xmlstarlet \
+  jq \
+  gettext-base \
+  dumb-init \
+  procps && \
   rm -rf /var/lib/apt/lists/*
 
 COPY --from=builder "/opt/apache-artemis-${ACTIVEMQ_ARTEMIS_VERSION}" "/opt/apache-artemis-${ACTIVEMQ_ARTEMIS_VERSION}"
