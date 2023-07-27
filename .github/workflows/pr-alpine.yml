@@ -8,7 +8,7 @@ jobs:
     if: "!contains(github.event.head_commit.message, 'skip ci')"
     name: Build and Push Image to Image registry
     env:
-      REGISTRY: docker.io
+      REGISTRY: ghcr.io/haydursek
     defaults:
       run:
         shell: bash
@@ -22,16 +22,17 @@ jobs:
           # Just Tag
           IMAGE_TAG=pr-${{ github.event.pull_request.number }}-$(echo ${{ github.event.pull_request.head.sha }} | cut -c1-8)
           # Just Image name
-          IMAGE_NAME=shahwar/${{ github.repository }}          
+          ORG_NAME=${GITHUB_REPOSITORY%/*}
+          REPO=${GITHUB_REPOSITORY#$ORG_NAME/}
+          #IMAGE_NAME=${{ github.repository }}
           #Image ID= Name + Tag
-          IMAGE_ID=$IMAGE_NAME:$IMAGE_TAG
+          IMAGE_ID=$REPO:$IMAGE_TAG
           IMAGE_REPO=$REGISTRY/$IMAGE_ID
-          echo "REGISTRY: $REGISTRY"
           echo "Image: $IMAGE_REPO"
           echo "::set-output name=image::$IMAGE_REPO"
           echo "::set-output name=image_name::$IMAGE_NAME"
-          echo REPO=$IMAGE_NAME >> $GITHUB_ENV
-          echo IMAGE=$(echo "$REGISTRY/$IMAGE_ID-alpine") >> $GITHUB_ENV
+          echo REPO=$REPO >> $GITHUB_ENV
+          echo IMAGE=$(echo "$REGISTRY/$IMAGE_ID") >> $GITHUB_ENV
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v1
@@ -40,8 +41,11 @@ jobs:
       - name: Login to DockerHub
         uses: docker/login-action@v1
         with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+          # username: ${{ secrets.DOCKERHUB_USERNAME }}
+          # password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Echo Output
         run: |
