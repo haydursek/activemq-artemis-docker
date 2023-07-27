@@ -23,11 +23,10 @@ jobs:
 
       - name: Generate Version
         id: generate_version
-        uses: anothrNick/github-tag-action@1.39.0
+        uses: anothrNick/github-tag-action@1.64.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          WITH_V: true
-          DRY_RUN: true
+          WITH_V: false
           DEFAULT_BUMP: "minor"
 
       - name: Generate Vars
@@ -35,17 +34,19 @@ jobs:
         run: |
           IMAGE_TAG=${{ steps.generate_version.outputs.new_tag }}
           # Just Image name
-          #IMAGE_NAME=${{ github.repository }}
-          IMAGE_NAME=shahwar/${{ github.event.repository.name }}
+          IMAGE_NAME=shahwar/${{ github.repository }}
+          #IMAGE_NAME=${{ github.event.repository.name }}
           #Image ID= Name + Tag
-          IMAGE_ID=$IMAGE_NAME:$IMAGE_TAG
+          IMAGE_ID=$IMAGE_NAME:$IMAGE_TAG          
           IMAGE_REPO=$REGISTRY/$IMAGE_ID
+          echo "IMAGE_ID: $IMAGE_ID"
           echo "REGISTRY: $REGISTRY"
           echo "Image: $IMAGE_REPO"
           echo "::set-output name=image::$IMAGE_REPO"
           echo "::set-output name=image_name::$IMAGE_NAME"
-          echo REPO=$IMAGE_NAME >> $GITHUB_ENV
-          echo IMAGE=$(echo "$REGISTRY/$IMAGE_ID") >> $GITHUB_ENV
+          echo 'REPO'=$IMAGE_NAME >> $GITHUB_ENV
+          echo 'IMAGE'=$(echo "$REGISTRY/$IMAGE_ID") >> $GITHUB_ENV
+          echo $GITHUB_ENV
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v1
@@ -85,7 +86,7 @@ jobs:
           push: true
           build-args: ACTIVEMQ_ARTEMIS_VERSION=2.17.0
           cache-to: type=inline
-          tags: ${{ env.IMAGE }}-alpine
+          tags: ${{ env.IMAGE }}-${{ steps.generate_version.outputs.new_tag }}-alpine
 
       - name: Push tag
         uses: anothrNick/github-tag-action@1.39.0
