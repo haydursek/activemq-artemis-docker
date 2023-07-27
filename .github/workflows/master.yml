@@ -16,78 +16,80 @@ jobs:
       run:
         shell: bash
     steps:
-    - name: Check out code into the Go module directory
-      uses: actions/checkout@v2
-      with:
-        fetch-depth: 0
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
 
-    - name: Generate Version
-      id: generate_version
-      uses: anothrNick/github-tag-action@1.39.0
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        WITH_V: true
-        DRY_RUN: true
-        DEFAULT_BUMP: "minor"
-        
-    - name: Generate Vars
-      id: generate_vars
-      run: |
-        IMAGE_TAG=${{ steps.generate_version.outputs.new_tag }}
-        # Just Image name
-        IMAGE_NAME=${{ github.repository }}
-        #Image ID= Name + Tag
-        IMAGE_ID=$IMAGE_NAME:$IMAGE_TAG
-        IMAGE_REPO=$REGISTRY/$IMAGE_ID
-        echo "Image: $IMAGE_REPO"
-        echo "::set-output name=image::$IMAGE_REPO"
-        echo "::set-output name=image_name::$IMAGE_NAME"
-        echo REPO=$IMAGE_NAME >> $GITHUB_ENV
-        echo IMAGE=$(echo "$REGISTRY/$IMAGE_ID") >> $GITHUB_ENV
+      - name: Generate Version
+        id: generate_version
+        uses: anothrNick/github-tag-action@1.39.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          WITH_V: true
+          DRY_RUN: true
+          DEFAULT_BUMP: "minor"
 
-    - name: Set up QEMU
-      uses: docker/setup-qemu-action@v1
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v1
-    - name: Login to DockerHub
-      uses: docker/login-action@v1 
-      with:
-        username: ${{ secrets.DOCKERHUB_USERNAME }}
-        password: ${{ secrets.DOCKERHUB_TOKEN }}
-    
-    - name: Echo Output
-      run: |
-        echo "Image from Output: ${{ steps.generate_vars.outputs.image }}"
-        echo "Repo from Output: ${{ steps.generate_vars.outputs.image_name }}"
-        echo "Image from Env:  ${{ env.IMAGE }}"
-        echo "Repo from Env:  ${{ env.REPO }}"
+      - name: Generate Vars
+        id: generate_vars
+        run: |
+          IMAGE_TAG=${{ steps.generate_version.outputs.new_tag }}
+          # Just Image name
+          #IMAGE_NAME=${{ github.repository }}
+          IMAGE_NAME=shahwar/${{ github.event.repository.name }}
+          #Image ID= Name + Tag
+          IMAGE_ID=$IMAGE_NAME:$IMAGE_TAG
+          IMAGE_REPO=$REGISTRY/$IMAGE_ID
+          echo "REGISTRY: $REGISTRY"
+          echo "Image: $IMAGE_REPO"
+          echo "::set-output name=image::$IMAGE_REPO"
+          echo "::set-output name=image_name::$IMAGE_NAME"
+          echo REPO=$IMAGE_NAME >> $GITHUB_ENV
+          echo IMAGE=$(echo "$REGISTRY/$IMAGE_ID") >> $GITHUB_ENV
 
-    - name: Build and Push Docker Image for Debian
-      uses: docker/build-push-action@v2
-      with:
-        context: ./src/
-        file: ./src/Dockerfile
-        pull: true
-        push: true
-        build-args: ACTIVEMQ_ARTEMIS_VERSION=2.17.0
-        cache-to: type=inline
-        tags: ${{ env.IMAGE }}
-        platforms: linux/amd64,linux/arm64
-    
-    - name: Build and Push Docker Image for Alpine
-      uses: docker/build-push-action@v2
-      with:
-        context: ./src/
-        file: ./src/Dockerfile.alpine
-        pull: true
-        push: true
-        build-args: ACTIVEMQ_ARTEMIS_VERSION=2.17.0
-        cache-to: type=inline
-        tags: ${{ env.IMAGE }}-alpine
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v1
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+      - name: Login to DockerHub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-    - name: Push tag
-      uses: anothrNick/github-tag-action@1.39.0
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        WITH_V: true
-        DEFAULT_BUMP: "minor"
+      - name: Echo Output
+        run: |
+          echo "Image from Output: ${{ steps.generate_vars.outputs.image }}"
+          echo "Repo from Output: ${{ steps.generate_vars.outputs.image_name }}"
+          echo "Image from Env:  ${{ env.IMAGE }}"
+          echo "Repo from Env:  ${{ env.REPO }}"
+
+      - name: Build and Push Docker Image for Debian
+        uses: docker/build-push-action@v2
+        with:
+          context: ./src/
+          file: ./src/Dockerfile
+          pull: true
+          push: true
+          build-args: ACTIVEMQ_ARTEMIS_VERSION=2.17.0
+          cache-to: type=inline
+          tags: ${{ env.IMAGE }}
+          platforms: linux/amd64,linux/arm64
+
+      - name: Build and Push Docker Image for Alpine
+        uses: docker/build-push-action@v2
+        with:
+          context: ./src/
+          file: ./src/Dockerfile.alpine
+          pull: true
+          push: true
+          build-args: ACTIVEMQ_ARTEMIS_VERSION=2.17.0
+          cache-to: type=inline
+          tags: ${{ env.IMAGE }}-alpine
+
+      - name: Push tag
+        uses: anothrNick/github-tag-action@1.39.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          WITH_V: true
+          DEFAULT_BUMP: "minor"
