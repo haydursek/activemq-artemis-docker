@@ -5,10 +5,12 @@ on:
     branches:
       - master
 
+permissions: read-all|write-all
+
 jobs:
   Build-and-Deploy:
     runs-on: ubuntu-latest
-    permissions: read-all|write-all
+
     if: "!contains(github.event.head_commit.message, 'skip ci')"
     name: Build and Push Image to Image registry
     env:
