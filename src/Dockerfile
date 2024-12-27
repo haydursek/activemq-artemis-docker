@@ -1,7 +1,7 @@
 # ActiveMQ Artemis
 
 ##########################################################
-## Build Image                                           #
+## Build Image Test                                           #
 ##########################################################
 FROM openjdk:17.0.2-jdk-buster as builder
 LABEL maintainer="Shahwar Maiwandi <shahwar.maiwandi@gmail.com>"
